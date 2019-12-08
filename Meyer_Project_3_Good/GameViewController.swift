@@ -9,6 +9,7 @@
 import UIKit
 import QuartzCore
 import SceneKit
+import SpriteKit
 
 class GameViewController: UIViewController {
 
@@ -16,7 +17,8 @@ class GameViewController: UIViewController {
         super.viewDidLoad()
         
         // create a new scene
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
+        let scene = SCNScene(named: "art.scnassets/MonkeyScene.scn")!
+        let monkeyScene = SCNScene(named: "art.scnassets/MechaMonkey.dae")
         
         // create and add a camera to the scene
         let cameraNode = SCNNode()
@@ -24,12 +26,12 @@ class GameViewController: UIViewController {
         scene.rootNode.addChildNode(cameraNode)
         
         // place the camera
-        cameraNode.position = SCNVector3(x: 0, y: 0, z: 15)
+        cameraNode.position = SCNVector3(x: 0, y: 1, z: 5.5)
         
         // create and add a light to the scene
         let lightNode = SCNNode()
         lightNode.light = SCNLight()
-        lightNode.light!.type = .omni
+        lightNode.light!.type = .directional
         lightNode.position = SCNVector3(x: 0, y: 10, z: 10)
         scene.rootNode.addChildNode(lightNode)
         
@@ -40,11 +42,12 @@ class GameViewController: UIViewController {
         ambientLightNode.light!.color = UIColor.darkGray
         scene.rootNode.addChildNode(ambientLightNode)
         
-        // retrieve the ship node
-        let ship = scene.rootNode.childNode(withName: "ship", recursively: true)!
-        
-        // animate the 3d object
-        ship.runAction(SCNAction.repeatForever(SCNAction.rotateBy(x: 0, y: 2, z: 0, duration: 1)))
+        // retrieve the mecha monkey node
+        let monkey = monkeyScene!.rootNode.childNode(withName: "Mecha_Monkey", recursively: true)!
+        monkey.scale = SCNVector3(x: 0.1, y: 0.1, z: 0.1)
+        monkey.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(node: monkey, options: [SCNPhysicsShape.Option.keepAsCompound : true]))
+        monkey.position = SCNVector3(x: 0, y: 25, z: 0)
+        scene.rootNode.addChildNode(monkey)
         
         // retrieve the SCNView
         let scnView = self.view as! SCNView
@@ -70,36 +73,17 @@ class GameViewController: UIViewController {
     func handleTap(_ gestureRecognize: UIGestureRecognizer) {
         // retrieve the SCNView
         let scnView = self.view as! SCNView
+        let batarangScene = SCNScene(named: "art.scnassets/Batarang.dae")
         
-        // check what nodes are tapped
-        let p = gestureRecognize.location(in: scnView)
-        let hitResults = scnView.hitTest(p, options: [:])
-        // check that we clicked on at least one object
-        if hitResults.count > 0 {
-            // retrieved the first clicked object
-            let result = hitResults[0]
-            
-            // get its material
-            let material = result.node.geometry!.firstMaterial!
-            
-            // highlight it
-            SCNTransaction.begin()
-            SCNTransaction.animationDuration = 0.5
-            
-            // on completion - unhighlight
-            SCNTransaction.completionBlock = {
-                SCNTransaction.begin()
-                SCNTransaction.animationDuration = 0.5
-                
-                material.emission.contents = UIColor.black
-                
-                SCNTransaction.commit()
-            }
-            
-            material.emission.contents = UIColor.red
-            
-            SCNTransaction.commit()
-        }
+        let batarang = batarangScene!.rootNode.childNode(withName: "Batarang", recursively: true)!
+        
+        batarang.scale = SCNVector3(x: 0.001, y: 0.001, z: 0.001)
+        batarang.physicsBody = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(node: batarang, options: [SCNPhysicsShape.Option.keepAsCompound : true]))
+        batarang.position = SCNVector3(x: 0, y: 0.5, z: 0.5)
+        
+        scnView.scene!.rootNode.addChildNode(batarang)
+        
+        batarang.physicsBody?.applyForce(SCNVector3(x: 0, y: 0, z: -10), at: SCNVector3(0,0,0), asImpulse: true)
     }
     
     override var shouldAutorotate: Bool {
